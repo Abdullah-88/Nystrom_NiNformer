@@ -164,7 +164,7 @@ def test(dataloader, model, loss_fn):
 
 # apply train and test
 
-logname = "/PATH/Nystrom_NiNformer/Experiments_cifar10/logs_approximator/logs_cifar10.csv"
+logname = "/PATH/Nystrom_NiNformer/Experiments_cifar10/logs_nystromninformer/logs_cifar10.csv"
 if not os.path.exists(logname):
   with open(logname, 'w') as logfile:
     logwriter = csv.writer(logfile, delimiter=',')
@@ -186,7 +186,7 @@ print("Done!")
 
 # saving trained model
 
-path = "/PATH/Nystrom_NiNformer/Experiments_cifar10/weights_approximator"
+path = "/PATH/Nystrom_NiNformer/Experiments_cifar10/weights_nystromninformer"
 model_name = "NystromNiNformerImageClassification_cifar10"
 torch.save(model.state_dict(), f"{path}/{model_name}.pth")
 print(f"Saved Model State to {path}/{model_name}.pth ")
