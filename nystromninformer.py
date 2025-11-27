@@ -172,7 +172,7 @@ class NystromNiNformerGatingUnit(nn.Module):
         super().__init__()
         self.proj = nn.Linear(d_model, d_model)    
         self.nystrom = NystromAttention(
-        dim,
+        d_model,
         dim_head = 64,
         heads = 4,
         num_landmarks = 32,
@@ -181,7 +181,7 @@ class NystromNiNformerGatingUnit(nn.Module):
         residual_conv_kernel = 33,
         eps = 1e-8,
         dropout = dropout)
-        self.norm = nn.LayerNorm(dim) 
+        self.norm = nn.LayerNorm(d_model) 
           
 
 	
