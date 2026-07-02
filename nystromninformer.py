@@ -220,7 +220,6 @@ class NystromNiNformerBlock(nn.Module):
 
 
 
-
 class NystromNiNformer(nn.Module):
     def __init__(self, d_model, d_ffn, num_layers,dropout):
         super().__init__()
