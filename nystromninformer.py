@@ -6,7 +6,6 @@ from einops.layers.torch import Rearrange
 from einops import rearrange, reduce
 from math import ceil
 
-
 class FeedForward(nn.Module):
     def __init__(self, dim, hidden_dim, dropout):
         super().__init__()
@@ -19,9 +18,6 @@ class FeedForward(nn.Module):
         )
     def forward(self, x):
         return self.net(x)
-
-
- 
 
 def exists(val):
     return val is not None
@@ -42,8 +38,6 @@ def moore_penrose_iter_pinv(x, iters = 6):
         z = 0.25 * z @ (13 * I - (xz @ (15 * I - (xz @ (7 * I - xz)))))
 
     return z
-
-
 
 class NystromAttention(nn.Module):
     def __init__(
@@ -83,8 +77,6 @@ class NystromAttention(nn.Module):
     def forward(self, x, mask = None, return_attn = False):
         b, n, _, h, m, iters, eps = *x.shape, self.heads, self.num_landmarks, self.pinv_iterations, self.eps
 
-        
-
         remainder = n % m
         if remainder > 0:
             padding = m - (n % m)
@@ -93,12 +85,8 @@ class NystromAttention(nn.Module):
             if exists(mask):
                 mask = F.pad(mask, (padding, 0), value = False)
 
-        
-
         q, k, v = self.to_qkv(x).chunk(3, dim = -1)
         q, k, v = map(lambda t: rearrange(t, 'b n (h d) -> b h n d', h = h), (q, k, v))
-
-        
 
         if exists(mask):
             mask = rearrange(mask, 'b n -> b () n')
@@ -106,34 +94,24 @@ class NystromAttention(nn.Module):
 
         q = q * self.scale
 
-        
-
         l = ceil(n / m)
         landmark_einops_eq = '... (n l) d -> ... n d'
         q_landmarks = reduce(q, landmark_einops_eq, 'sum', l = l)
         k_landmarks = reduce(k, landmark_einops_eq, 'sum', l = l)
-
-        
 
         divisor = l
         if exists(mask):
             mask_landmarks_sum = reduce(mask, '... (n l) -> ... n', 'sum', l = l)
             divisor = mask_landmarks_sum[..., None] + eps
             mask_landmarks = mask_landmarks_sum > 0
-
         
-
         q_landmarks /= divisor
         k_landmarks /= divisor
-
        
-
         einops_eq = '... i d, ... j d -> ... i j'
         sim1 = einsum(einops_eq, q, k_landmarks)
         sim2 = einsum(einops_eq, q_landmarks, k_landmarks)
         sim3 = einsum(einops_eq, q_landmarks, k)
-
-        
 
         if exists(mask):
             mask_value = -torch.finfo(q.dtype).max
@@ -141,19 +119,13 @@ class NystromAttention(nn.Module):
             sim2.masked_fill_(~(mask_landmarks[..., None] * mask_landmarks[..., None, :]), mask_value)
             sim3.masked_fill_(~(mask_landmarks[..., None] * mask[..., None, :]), mask_value)
 
-        
-
         attn1, attn2, attn3 = map(lambda t: t.softmax(dim = -1), (sim1, sim2, sim3))
         attn2_inv = moore_penrose_iter_pinv(attn2, iters)
 
         out = (attn1 @ attn2_inv) @ (attn3 @ v)
 
-        
-
         if self.residual:
             out += self.res_conv(v)
-
-        
 
         out = rearrange(out, 'b h n d -> b n (h d)', h = h)
         out = self.to_out(out)
@@ -165,10 +137,8 @@ class NystromAttention(nn.Module):
 
         return out
 
-
-
 class NystromNiNformerGatingUnit(nn.Module):
-    def __init__(self,d_model,d_ffn,dropout):
+    def __init__(self, d_model, d_ffn, dropout):
         super().__init__()
         self.proj = nn.Linear(d_model, d_model)    
         self.nystrom = NystromAttention(
@@ -183,10 +153,6 @@ class NystromNiNformerGatingUnit(nn.Module):
         dropout = dropout)
         self.norm = nn.LayerNorm(d_model) 
           
-
-	
-       
-
     def forward(self, x):
         u, v = x, x 
         u = self.nystrom(u)  
@@ -194,9 +160,8 @@ class NystromNiNformerGatingUnit(nn.Module):
         out = u * v
         return out
 
-
 class NystromNiNformerBlock(nn.Module):
-    def __init__(self, d_model, d_ffn,dropout):
+    def __init__(self, d_model, d_ffn, dropout):
         super().__init__()
        
         self.norm = nn.LayerNorm(d_model)       
@@ -213,15 +178,8 @@ class NystromNiNformerBlock(nn.Module):
         out = x + residual
         return out
 
-
-
-
-
-
-
-
 class NystromNiNformer(nn.Module):
-    def __init__(self, d_model, d_ffn, num_layers,dropout):
+    def __init__(self, d_model, d_ffn, num_layers, dropout):
         super().__init__()
         
         self.model = nn.Sequential(
@@ -236,10 +194,3 @@ class NystromNiNformer(nn.Module):
         x = self.model(x)
         
         return x
-
-
-
-
-
-
-
