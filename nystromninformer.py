@@ -165,8 +165,8 @@ class NystromNiNformerBlock(nn.Module):
         super().__init__()
        
         self.norm = nn.LayerNorm(d_model)       
-        self.ngu = NystromNiNformerGatingUnit(d_model,d_ffn,dropout)
-        self.ffn = FeedForward(d_model,d_ffn,dropout)
+        self.ngu = NystromNiNformerGatingUnit(d_model, d_ffn, dropout)
+        self.ffn = FeedForward(d_model, d_ffn, dropout)
     def forward(self, x):
         residual = x
         x = self.norm(x)
@@ -184,7 +184,7 @@ class NystromNiNformer(nn.Module):
         
         self.model = nn.Sequential(
             
-            *[NystromNiNformerBlock(d_model,d_ffn,dropout) for _ in range(num_layers)],
+            *[NystromNiNformerBlock(d_model, d_ffn, dropout) for _ in range(num_layers)],
             
             
         )
